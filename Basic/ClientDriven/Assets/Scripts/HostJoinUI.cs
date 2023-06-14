@@ -1,6 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 using Unity.Multiplayer.Playmode;
+using Unity.Multiplayer.Tools.NetworkSimulator.Runtime;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -8,6 +9,9 @@ using UnityEngine.UIElements;
 
 public class HostJoinUI : MonoBehaviour
 {
+    [SerializeField]
+    NetworkSimulator m_NetworkSimulator;
+    
     [SerializeField]
     UIDocument m_MainMenuUIDocument;
 
@@ -63,6 +67,14 @@ public class HostJoinUI : MonoBehaviour
                 break;
             case "Client":
                 StartClient(null);
+                break;
+            case "Client_Mobile2G":
+                StartClient(null);
+                m_NetworkSimulator.ConnectionPreset = NetworkSimulatorPresets.Mobile2G; 
+                break;
+            case "Client_Mobile5G":
+                StartClient(null);
+                m_NetworkSimulator.ConnectionPreset = NetworkSimulatorPresets.Mobile5G; 
                 break;
             default:
                 ToggleMainMenuUI(true);
