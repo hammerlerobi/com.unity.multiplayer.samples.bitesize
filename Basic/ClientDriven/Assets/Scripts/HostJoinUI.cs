@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using Unity.Multiplayer.Playmode;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
@@ -52,8 +53,22 @@ public class HostJoinUI : MonoBehaviour
 
     void Start()
     {
-        ToggleMainMenuUI(true);
-        ToggleInGameUI(false);
+        switch (CurrentPlayer.Tag)
+        {
+            case "Host":
+                StartHost(null);
+                break;
+            case "Server":
+                StartServer(null);
+                break;
+            case "Client":
+                StartClient(null);
+                break;
+            default:
+                ToggleMainMenuUI(true);
+                ToggleInGameUI(false);
+                break;
+        }
     }
 
     void StartHost(EventBase obj)
