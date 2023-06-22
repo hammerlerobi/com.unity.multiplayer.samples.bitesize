@@ -73,8 +73,43 @@ public class ClientPlayerMove : NetworkBehaviour
         cinemachineVirtualCamera.Follow = m_CameraFollow;
     }
 
+    void OnPass()
+    {
+        Debug.Log("I am PASSING");
+        //Check if we have a ball already picked up
+        if (!m_ServerPlayerMove.isObjectPickedUp.Value)
+        {
+            return;
+        }
+
+        //Detect nearby balls to pass to
+        var players = GameObject.FindGameObjectsWithTag("Player");
+        var minDistance = float.MaxValue;
+        GameObject closestPlayer = null;
+        foreach (var player in players)
+        {   
+            if (player.transform == transform)
+            {
+                continue;
+            }
+
+            var dst = Vector3.Distance(transform.position, player.transform.position);
+            if(dst < minDistance)
+            {
+                minDistance = dst;
+                closestPlayer = player;
+            }
+        }
+        Debug.Log("closest player is " + minDistance + " away " + closestPlayer.name);
+        var objectToPickUpID = m_ServerPlayerMove.m_PickedUpObject.NetworkObjectId;
+        Debug.Log("ball  is " + objectToPickUpID);
+        m_ServerPlayerMove.PassObjectServerRpc(objectToPickUpID, closestPlayer.GetComponent<NetworkObject>().NetworkObjectId);
+
+
+    }
     void OnPickUp()
     {
+        Debug.Log("I am picking up");
         if (m_ServerPlayerMove.isObjectPickedUp.Value)
         {
             m_ServerPlayerMove.DropObjectServerRpc();

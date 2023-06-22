@@ -12,7 +12,7 @@ public class ServerPlayerMove : NetworkBehaviour
 {
     public NetworkVariable<bool> isObjectPickedUp = new NetworkVariable<bool>();
     
-    NetworkObject m_PickedUpObject;
+    public NetworkObject m_PickedUpObject;
 
     [SerializeField]
     Vector3 m_LocalHeldPosition;
@@ -67,6 +67,32 @@ public class ServerPlayerMove : NetworkBehaviour
         }
     }
 
+    
+    [ServerRpc]
+    public void PassObjectServerRpc(ulong objToPickupID, ulong closestPlayerID)
+    {        
+        NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objToPickupID, out var objectToPass);
+        NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(closestPlayerID, out var closestPlayer);
+        
+        
+        if (objectToPass.TryGetComponent(out NetworkObject networkObject) 
+            && closestPlayer.TryGetComponent(out Transform ClosestplayerTransform)
+            && networkObject.TrySetParent(ClosestplayerTransform))
+        {
+            var pickUpObjectRigidbody = objectToPass.GetComponent<Rigidbody>();
+            pickUpObjectRigidbody.isKinematic = true;
+            pickUpObjectRigidbody.interpolation = RigidbodyInterpolation.None;
+            objectToPass.GetComponent<NetworkTransform>().InLocalSpace = true;
+            objectToPass.transform.localPosition = m_LocalHeldPosition;
+            //objectToPickup.GetComponent<ServerIngredient>().ingredientDespawned += IngredientDespawned;
+            isObjectPickedUp.Value = false;
+            m_PickedUpObject = null;
+
+            closestPlayer.GetComponent<ServerPlayerMove>().isObjectPickedUp.Value = true;
+            closestPlayer.GetComponent<ServerPlayerMove>().m_PickedUpObject = objectToPass; 
+            //
+        }
+    }
     void IngredientDespawned()
     {
         m_PickedUpObject = null;
@@ -90,4 +116,5 @@ public class ServerPlayerMove : NetworkBehaviour
         isObjectPickedUp.Value = false;
     }
     // DOC END HERE
+
 }
