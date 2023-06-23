@@ -101,9 +101,8 @@ public class ClientPlayerMove : NetworkBehaviour
             }
         }
         Debug.Log("closest player is " + minDistance + " away " + closestPlayer.name);
-        var objectToPickUpID = m_ServerPlayerMove.m_PickedUpObject.NetworkObjectId;
-        Debug.Log("ball  is " + objectToPickUpID);
-        m_ServerPlayerMove.PassObjectServerRpc(objectToPickUpID, closestPlayer.GetComponent<NetworkObject>().NetworkObjectId);
+        Debug.Log("ball  is " + m_ServerPlayerMove.pickedUpObjectID.Value);
+        m_ServerPlayerMove.PassObjectServerRpc(m_ServerPlayerMove.pickedUpObjectID.Value, closestPlayer.GetComponent<NetworkObject>().NetworkObjectId);
 
 
     }

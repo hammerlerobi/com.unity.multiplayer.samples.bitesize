@@ -11,8 +11,25 @@ using UnityEngine;
 public class ServerPlayerMove : NetworkBehaviour
 {
     public NetworkVariable<bool> isObjectPickedUp = new NetworkVariable<bool>();
-    
-    public NetworkObject m_PickedUpObject;
+    public NetworkVariable<ulong> pickedUpObjectID;
+
+    NetworkObject m_PickedUpObject;
+    NetworkObject PickedUpObject
+    {
+        get => m_PickedUpObject;
+        set
+        {
+            m_PickedUpObject = value;
+            if (m_PickedUpObject == null)
+            {
+                isObjectPickedUp.Value = false;
+                pickedUpObjectID.Value = 999999;
+                return;
+            }
+            isObjectPickedUp.Value = true;
+            pickedUpObjectID.Value = m_PickedUpObject.NetworkObjectId;
+        }
+    }
 
     [SerializeField]
     Vector3 m_LocalHeldPosition;
@@ -51,6 +68,8 @@ public class ServerPlayerMove : NetworkBehaviour
     [ServerRpc]
     public void PickupObjectServerRpc(ulong objToPickupID)
     {        
+        Debug.Log("Execute on Server" +IsServer);
+        
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objToPickupID, out var objectToPickup);
         if (objectToPickup == null || objectToPickup.transform.parent != null) return; // object already picked up, server authority says no
 
@@ -62,8 +81,7 @@ public class ServerPlayerMove : NetworkBehaviour
             objectToPickup.GetComponent<NetworkTransform>().InLocalSpace = true;
             objectToPickup.transform.localPosition = m_LocalHeldPosition;
             objectToPickup.GetComponent<ServerIngredient>().ingredientDespawned += IngredientDespawned;
-            isObjectPickedUp.Value = true;
-            m_PickedUpObject = objectToPickup;
+            PickedUpObject = objectToPickup;
         }
     }
 
@@ -71,6 +89,7 @@ public class ServerPlayerMove : NetworkBehaviour
     [ServerRpc]
     public void PassObjectServerRpc(ulong objToPickupID, ulong closestPlayerID)
     {        
+        Debug.Log("Execute on Server" +IsServer);
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objToPickupID, out var objectToPass);
         NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(closestPlayerID, out var closestPlayer);
         
@@ -85,35 +104,34 @@ public class ServerPlayerMove : NetworkBehaviour
             objectToPass.GetComponent<NetworkTransform>().InLocalSpace = true;
             objectToPass.transform.localPosition = m_LocalHeldPosition;
             //objectToPickup.GetComponent<ServerIngredient>().ingredientDespawned += IngredientDespawned;
-            isObjectPickedUp.Value = false;
-            m_PickedUpObject = null;
+            PickedUpObject = null;
 
             closestPlayer.GetComponent<ServerPlayerMove>().isObjectPickedUp.Value = true;
-            closestPlayer.GetComponent<ServerPlayerMove>().m_PickedUpObject = objectToPass; 
+            closestPlayer.GetComponent<ServerPlayerMove>().PickedUpObject = objectToPass; 
+            closestPlayer.GetComponent<ServerPlayerMove>().pickedUpObjectID.Value = objectToPass.NetworkObjectId; 
             //
         }
     }
     void IngredientDespawned()
     {
-        m_PickedUpObject = null;
+        PickedUpObject = null;
         isObjectPickedUp.Value = false;
     }
     
     [ServerRpc]
     public void DropObjectServerRpc()
     {
-        if (m_PickedUpObject != null)
+        Debug.Log("Execute on Server" +IsServer);
+        if (PickedUpObject != null)
         {
             // can be null if enter drop zone while carrying
-            m_PickedUpObject.transform.parent = null;
-            var pickedUpObjectRigidbody = m_PickedUpObject.GetComponent<Rigidbody>();
+            PickedUpObject.transform.parent = null;
+            var pickedUpObjectRigidbody = PickedUpObject.GetComponent<Rigidbody>();
             pickedUpObjectRigidbody.isKinematic = false;
             pickedUpObjectRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-            m_PickedUpObject.GetComponent<NetworkTransform>().InLocalSpace = false;
-            m_PickedUpObject = null;
+            PickedUpObject.GetComponent<NetworkTransform>().InLocalSpace = false;
+            PickedUpObject = null;
         }
-
-        isObjectPickedUp.Value = false;
     }
     // DOC END HERE
 
