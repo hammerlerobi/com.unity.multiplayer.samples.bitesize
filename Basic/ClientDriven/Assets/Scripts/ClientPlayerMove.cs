@@ -76,35 +76,40 @@ public class ClientPlayerMove : NetworkBehaviour
     void OnPass()
     {
         Debug.Log("I am PASSING");
-        //Check if we have a ball already picked up
+        // Check if we have a ball already picked up
         if (!m_ServerPlayerMove.isObjectPickedUp.Value)
         {
             return;
         }
 
-        //Detect nearby balls to pass to
+        // Detect nearby players to pass to
         var players = GameObject.FindGameObjectsWithTag("Player");
-        var minDistance = float.MaxValue;
+        
+        // Also the max distance that is a allowed to pass the ball
+        var closestPlayerDistance = 4f;
         GameObject closestPlayer = null;
         foreach (var player in players)
         {   
             if (player.transform == transform)
-            {
                 continue;
-            }
 
             var dst = Vector3.Distance(transform.position, player.transform.position);
-            if(dst < minDistance)
+            if(dst < closestPlayerDistance)
             {
-                minDistance = dst;
+                closestPlayerDistance = dst;
                 closestPlayer = player;
             }
         }
-        Debug.Log("closest player is " + minDistance + " away " + closestPlayer.name);
-        Debug.Log("ball  is " + m_ServerPlayerMove.pickedUpObjectID.Value);
-        m_ServerPlayerMove.PassObjectServerRpc(m_ServerPlayerMove.pickedUpObjectID.Value, closestPlayer.GetComponent<NetworkObject>().NetworkObjectId);
-
-
+        
+        if (closestPlayer != null)
+        {
+            Debug.Log("closest player is " + closestPlayerDistance + " away " + closestPlayer.name);
+            m_ServerPlayerMove.PassObjectServerRpc(m_ServerPlayerMove.pickedUpObjectID.Value, closestPlayer.GetComponent<NetworkObject>().NetworkObjectId);
+            return;
+        }
+        
+        Debug.Log("No player in range to pass the ball");
+        
     }
     void OnPickUp()
     {
