@@ -12,6 +12,7 @@ public class ServerPlayerMove : NetworkBehaviour
 {
     public NetworkVariable<bool> isObjectPickedUp = new NetworkVariable<bool>();
     public NetworkVariable<ulong> pickedUpObjectID;
+    
 
     NetworkObject m_PickedUpObject;
     NetworkObject PickedUpObject
@@ -96,15 +97,39 @@ public class ServerPlayerMove : NetworkBehaviour
         
         if (objectToPass.TryGetComponent(out NetworkObject networkObject) 
             && closestPlayer.TryGetComponent(out Transform ClosestplayerTransform)
-            && networkObject.TrySetParent(ClosestplayerTransform))
+            /*&& networkObject.TrySetParent(ClosestplayerTransform)*/)
         {
             var pickUpObjectRigidbody = objectToPass.GetComponent<Rigidbody>();
-            pickUpObjectRigidbody.isKinematic = true;
-            pickUpObjectRigidbody.interpolation = RigidbodyInterpolation.None;
-            objectToPass.GetComponent<NetworkTransform>().InLocalSpace = true;
-            objectToPass.transform.localPosition = m_LocalHeldPosition;
+            PickedUpObject.transform.parent = null;
+            // pickUpObjectRigidbody.isKinematic = false;
+            // pickUpObjectRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+            
+            // Make the ball face the target
+           
+            //bjectToPass.GetComponent<NetworkTransform>().InLocalSpace = true;
+            //objectToPass.transform.localPosition = m_LocalHeldPosition;
             //objectToPickup.GetComponent<ServerIngredient>().ingredientDespawned += IngredientDespawned;
-            PickedUpObject = null;
+            
+            
+            
+            if (PickedUpObject != null)
+            {
+                // can be null if enter drop zone while carrying
+                PickedUpObject.transform.parent = null;
+                var pickedUpObjectRigidbody = PickedUpObject.GetComponent<Rigidbody>();
+                pickedUpObjectRigidbody.isKinematic = false;
+                pickedUpObjectRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+                PickedUpObject.GetComponent<NetworkTransform>().InLocalSpace = false;
+                PickedUpObject = null;
+                
+                // Calculate the launch force
+                pickUpObjectRigidbody.transform.LookAt(new Vector3(ClosestplayerTransform.transform.position.x, ClosestplayerTransform.transform.position.y + 10f, ClosestplayerTransform.transform.position.z));
+                Vector3 forceDirection = pickUpObjectRigidbody.transform.forward;
+                Vector3 force = forceDirection * 400f;
+                pickUpObjectRigidbody.AddForce(force);
+            }
+            
+            
 
             closestPlayer.GetComponent<ServerPlayerMove>().isObjectPickedUp.Value = true;
             closestPlayer.GetComponent<ServerPlayerMove>().PickedUpObject = objectToPass; 

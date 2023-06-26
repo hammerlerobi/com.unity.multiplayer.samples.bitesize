@@ -86,7 +86,7 @@ public class ClientPlayerMove : NetworkBehaviour
         var players = GameObject.FindGameObjectsWithTag("Player");
         
         // Also the max distance that is a allowed to pass the ball
-        var closestPlayerDistance = 4f;
+        var closestPlayerDistance = 400f;
         GameObject closestPlayer = null;
         foreach (var player in players)
         {   
