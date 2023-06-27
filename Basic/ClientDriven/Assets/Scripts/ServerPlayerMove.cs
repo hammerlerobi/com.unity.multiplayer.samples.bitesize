@@ -67,6 +67,7 @@ public class ServerPlayerMove : NetworkBehaviour
     }
 
     [ServerRpc]
+    //[ServerRpc(RequireOwnership = false)]
     public void PickupObjectServerRpc(ulong objToPickupID)
     {        
         Debug.Log("Execute on Server" +IsServer);
@@ -111,7 +112,6 @@ public class ServerPlayerMove : NetworkBehaviour
             //objectToPickup.GetComponent<ServerIngredient>().ingredientDespawned += IngredientDespawned;
             
             
-            
             if (PickedUpObject != null)
             {
                 // can be null if enter drop zone while carrying
@@ -127,6 +127,7 @@ public class ServerPlayerMove : NetworkBehaviour
                 Vector3 forceDirection = pickUpObjectRigidbody.transform.forward;
                 Vector3 force = forceDirection * 400f;
                 pickUpObjectRigidbody.AddForce(force);
+                objectToPass.GetComponent<ThrowBall>().isThrown.Value = true;
             }
             
             
